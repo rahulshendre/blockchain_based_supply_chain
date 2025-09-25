@@ -69,8 +69,8 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 20,
-    paddingTop: 40, // Extra top padding to avoid camera/notch
+    padding: 24,
+    paddingTop: 64, // Extra top padding to avoid camera/notch
   },
   title: {
     fontSize: 24,
