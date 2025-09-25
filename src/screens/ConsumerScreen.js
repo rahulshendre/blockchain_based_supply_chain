@@ -6,7 +6,8 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
-  Button
+  Button,
+  SafeAreaView
 } from "react-native";
 import ScannerScreen from "./ScannerScreen";
 import { 
@@ -170,8 +171,9 @@ export default function ConsumerScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView style={styles.container}>
+        <View style={styles.content}>
         <Text style={styles.title}>👤 Consumer: Verify Product</Text>
         
         {/* Network Status and Wallet Info */}
@@ -311,18 +313,23 @@ export default function ConsumerScreen() {
             </View>
           </View>
         ) : null}
-      </View>
-    </ScrollView>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: '#f3e5f5', // Light purple for consumer
   },
+  container: {
+    flex: 1,
+  },
   content: {
     padding: 20,
+    paddingTop: 40, // Extra top padding to avoid camera/notch
   },
   title: {
     fontSize: 24,

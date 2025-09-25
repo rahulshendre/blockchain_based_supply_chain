@@ -7,7 +7,8 @@ import {
   StyleSheet, 
   Alert,
   ScrollView,
-  ActivityIndicator
+  ActivityIndicator,
+  SafeAreaView
 } from "react-native";
 import ScannerScreen from "./ScannerScreen";
 import { 
@@ -166,8 +167,9 @@ export default function DistributorScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView style={styles.container}>
+        <View style={styles.content}>
         <Text style={styles.title}>🚚 Distributor: Process Product</Text>
         
         {/* Network Status and Wallet Info */}
@@ -233,18 +235,23 @@ export default function DistributorScreen() {
             )}
           </View>
         ) : null}
-      </View>
-    </ScrollView>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: '#e8f4fd', // Light blue for distributor
   },
+  container: {
+    flex: 1,
+  },
   content: {
     padding: 20,
+    paddingTop: 40, // Extra top padding to avoid camera/notch
   },
   title: {
     fontSize: 24,

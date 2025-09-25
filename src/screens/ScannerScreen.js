@@ -6,7 +6,8 @@ import {
   StyleSheet, 
   Alert,
   TouchableOpacity,
-  TextInput
+  TextInput,
+  SafeAreaView
 } from "react-native";
 // import { BarCodeScanner } from "expo-barcode-scanner";
 
@@ -32,7 +33,8 @@ export default function ScannerScreen({ role = "Distributor", onBatchScanned }) 
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
       <Text style={styles.title}>{role}: Scan Product</Text>
       
       {batchId ? (
@@ -55,15 +57,20 @@ export default function ScannerScreen({ role = "Distributor", onBatchScanned }) 
           <Button title="Submit Batch ID" onPress={handleManualScan} />
         </View>
       )}
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  container: {
+    flex: 1,
     padding: 20,
+    paddingTop: 40, // Extra top padding to avoid camera/notch
   },
   title: {
     fontSize: 24,

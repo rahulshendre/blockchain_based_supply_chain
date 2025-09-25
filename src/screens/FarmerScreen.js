@@ -7,7 +7,8 @@ import {
   StyleSheet, 
   Alert,
   ScrollView,
-  ActivityIndicator
+  ActivityIndicator,
+  SafeAreaView
 } from "react-native";
 import QRCodeGenerator from "../components/QRCodeGenerator";
 import { v4 as uuidv4 } from "uuid";
@@ -108,8 +109,9 @@ export default function FarmerScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView style={styles.container}>
+        <View style={styles.content}>
         <Text style={styles.title}>🌱 Farmer: Add Product</Text>
         
         {/* Network Status and Wallet Info */}
@@ -160,18 +162,23 @@ export default function FarmerScreen() {
             <Button title="Create New Batch" onPress={resetForm} />
           </View>
         ) : null}
-      </View>
-    </ScrollView>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: '#e8f5e8', // Light green for farmer
   },
+  container: {
+    flex: 1,
+  },
   content: {
     padding: 20,
+    paddingTop: 40, // Extra top padding to avoid camera/notch
   },
   title: {
     fontSize: 24,
