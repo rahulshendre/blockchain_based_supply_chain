@@ -207,7 +207,16 @@ export default function ConsumerScreen() {
             
             <View style={styles.infoRow}>
               <Text style={styles.label}>Quantity:</Text>
-              <Text style={styles.value}>{productInfo.quantity} units</Text>
+              {(() => {
+                const locals = getLocalQuantities(productInfo.batchId);
+                let displayQty = productInfo.quantity;
+                if (locals.length) {
+                  const consumerRec = locals.find(r => (r.role || '').toLowerCase().includes('consumer'));
+                  const lastRec = locals[locals.length - 1];
+                  displayQty = consumerRec?.quantity || lastRec?.quantity || displayQty;
+                }
+                return <Text style={styles.value}>{displayQty} units</Text>;
+              })()}
             </View>
             
             <View style={styles.infoRow}>
