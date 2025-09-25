@@ -10,10 +10,14 @@ import {
   ActivityIndicator,
   SafeAreaView 
 } from "react-native";
+import { useRouter } from 'expo-router';
+import { useQR } from '../context/QRContext';
 import ScannerScreen from "./ScannerScreen";
 import { retailerWallet, distributorWallet, farmerWallet, consumerWallet, getSupplyChainContract, executeTransaction, testNetworkConnection, getWalletBalance, provider, setLocalQuantity } from "../utils/blockchain";
 
 export default function RetailerScreen() {
+  const router = useRouter();
+  const { scannedBatchId, clearScannedData, setScanningRole, markRoleCompleted, isRoleCompleted } = useQR();
   const [batchId, setBatchId] = useState("");
   const [quantity, setQuantity] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,7 +44,17 @@ export default function RetailerScreen() {
         setNetworkStatus("❌ Error");
       }
     })();
+    // Set scanning role for this screen
+    setScanningRole('Retailer');
   }, []);
+
+  // Handle scanned batch ID from QR context
+  useEffect(() => {
+    if (scannedBatchId) {
+      setBatchId(scannedBatchId);
+      clearScannedData();
+    }
+  }, [scannedBatchId, clearScannedData]);
 
   const handleBatchScanned = (scannedBatchId) => {
     setBatchId(scannedBatchId);
@@ -185,6 +199,8 @@ export default function RetailerScreen() {
         );
         // Store declared quantity off-chain for this hop
         setLocalQuantity(id, 'Retailer', quantity.toString(), updateRes.hash, Date.now());
+        // Mark Retailer role as completed for this batch
+        markRoleCompleted(id, 'Retailer');
         setBatchId(id);
         setQuantity("");
         // Refresh displayed wallet balance
@@ -211,6 +227,15 @@ export default function RetailerScreen() {
         <View style={styles.statusContainer}>
           <Text style={styles.statusText}>Network: {networkStatus}</Text>
           <Text style={styles.statusText}>Balance: {walletBalance} ETH</Text>
+          <View style={{ height: 8 }} />
+          <Button 
+            title="Scan QR" 
+            onPress={() => router.push('/(tabs)/camera')}
+            disabled={Boolean(batchId && isRoleCompleted(batchId, 'Retailer'))}
+          />
+          {batchId && isRoleCompleted(batchId, 'Retailer') && (
+            <Text style={styles.disabledText}>QR scanning disabled - transaction completed</Text>
+          )}
         </View>
 
         {(lastTransaction || onChainStatus || batchDetails) ? (
@@ -243,22 +268,34 @@ export default function RetailerScreen() {
           <View style={styles.updateSection}>
             <Text style={styles.batchInfo}>Batch ID: {batchId}</Text>
             
-            <TextInput
-              style={styles.input}
-              placeholder="Quantity Stocked"
-              value={quantity}
-              onChangeText={setQuantity}
-              keyboardType="numeric"
-            />
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#FF9800" />
+            {isRoleCompleted(batchId, 'Retailer') ? (
+              <View style={styles.completedSection}>
+                <Text style={styles.completedText}>✅ Retailer transaction completed</Text>
+                <Text style={styles.completedSubtext}>This batch has been stocked by the Retailer and is ready for the Consumer.</Text>
+                {lastTransaction && (
+                  <Text style={styles.transactionText}>Transaction: {lastTransaction}</Text>
+                )}
               </View>
             ) : (
-              <Button 
-                title="Update Batch" 
-                onPress={handleUpdate}
-              />
+              <>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Quantity Stocked"
+                  value={quantity}
+                  onChangeText={setQuantity}
+                  keyboardType="numeric"
+                />
+                {loading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#FF9800" />
+                  </View>
+                ) : (
+                  <Button 
+                    title="Update Batch" 
+                    onPress={handleUpdate}
+                  />
+                )}
+              </>
             )}
           </View>
         ) : null}
@@ -277,8 +314,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 25,
-    paddingTop: 96, // Reduce overall gap below header
+    padding: 30,
+    paddingTop: 80, // Extra top padding to avoid camera/notch
   },
   title: {
     fontSize: 24,
@@ -290,7 +327,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 15,
     borderRadius: 10,
-    marginBottom: 8,
+    marginBottom: 20,
     alignItems: 'center',
   },
   statusText: {
@@ -337,5 +374,38 @@ const styles = StyleSheet.create({
   loadingContainer: {
     alignItems: 'center',
     padding: 20,
+  },
+  completedSection: {
+    backgroundColor: '#fff3e0',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FF9800',
+  },
+  completedText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#e65100',
+    marginBottom: 8,
+  },
+  completedSubtext: {
+    fontSize: 14,
+    color: '#f57c00',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  transactionText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 10,
+    textAlign: 'center',
+  },
+  disabledText: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 5,
+    fontStyle: 'italic',
   },
 });

@@ -153,13 +153,22 @@ export default function FarmerScreen() {
 
         {batchId ? (
           <View style={styles.qrSection}>
-            <Text style={styles.batchId}>✅ Batch Created Successfully!</Text>
-            <Text style={styles.batchId}>Batch ID: {batchId}</Text>
-            {lastTransaction && (
-              <Text style={styles.transactionText}>Transaction: {lastTransaction}</Text>
-            )}
-            <QRCodeGenerator value={batchId} />
-            <Button title="Create New Batch" onPress={resetForm} />
+            <Text style={styles.successTitle}>✅ Batch Created Successfully!</Text>
+            
+            <View style={styles.batchDetails}>
+              <Text style={styles.batchId}>Batch ID: {batchId}</Text>
+              <Text style={styles.productInfo}>Product: {product}</Text>
+              <Text style={styles.quantityInfo}>Quantity: {quantity} units</Text>
+              {lastTransaction && (
+                <Text style={styles.transactionText}>Transaction: {lastTransaction}</Text>
+              )}
+            </View>
+
+            <QRCodeGenerator value={batchId} size={250} showLabel={true} />
+            
+            <View style={styles.actionButtons}>
+              <Button title="Create New Batch" onPress={resetForm} />
+            </View>
           </View>
         ) : null}
         </View>
@@ -177,7 +186,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 25,
+    padding: 30,
     paddingTop: 210, // Extra top padding to avoid camera/notch
   },
   title: {
@@ -224,19 +233,60 @@ const styles = StyleSheet.create({
   qrSection: {
     backgroundColor: 'white',
     padding: 20,
-    borderRadius: 10,
+    borderRadius: 15,
     alignItems: 'center',
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  successTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  batchDetails: {
+    backgroundColor: '#f8f9fa',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+    width: '100%',
   },
   batchId: {
     fontSize: 16,
-    marginBottom: 15,
+    marginBottom: 8,
     textAlign: 'center',
     fontWeight: 'bold',
+    color: '#333',
+  },
+  productInfo: {
+    fontSize: 14,
+    marginBottom: 5,
+    textAlign: 'center',
+    color: '#666',
+  },
+  quantityInfo: {
+    fontSize: 14,
+    marginBottom: 8,
+    textAlign: 'center',
+    color: '#666',
   },
   transactionText: {
     fontSize: 12,
-    color: '#666',
-    marginBottom: 10,
+    color: '#999',
+    marginTop: 8,
     textAlign: 'center',
+    fontFamily: 'monospace',
+  },
+  actionButtons: {
+    marginTop: 20,
+    width: '100%',
   },
 });

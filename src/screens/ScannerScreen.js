@@ -69,8 +69,8 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 25,
-    paddingTop: 32, // Reduced to bring scanner content closer to network card
+    padding: 30,
+    paddingTop: 80, // Extra top padding to avoid camera/notch
   },
   title: {
     fontSize: 24,

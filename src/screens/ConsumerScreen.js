@@ -9,6 +9,8 @@ import {
   Button,
   SafeAreaView
 } from "react-native";
+import { useRouter } from 'expo-router';
+import { useQR } from '../context/QRContext';
 import ScannerScreen from "./ScannerScreen";
 import { 
   consumerWallet, 
@@ -19,6 +21,8 @@ import {
 } from "../utils/blockchain";
 
 export default function ConsumerScreen() {
+  const router = useRouter();
+  const { scannedBatchId, clearScannedData, setScanningRole } = useQR();
   const [batchId, setBatchId] = useState("");
   const [productInfo, setProductInfo] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -41,7 +45,19 @@ export default function ConsumerScreen() {
   // Check network connection and wallet balance on component mount
   useEffect(() => {
     checkNetworkAndBalance();
+    // Set scanning role for this screen
+    setScanningRole('Consumer');
   }, []);
+
+  // Handle scanned batch ID from QR context
+  useEffect(() => {
+    if (scannedBatchId) {
+      setBatchId(scannedBatchId);
+      clearScannedData();
+      // Automatically fetch product info when batch ID is scanned
+      handleBatchScanned(scannedBatchId);
+    }
+  }, [scannedBatchId, clearScannedData]);
 
   const checkNetworkAndBalance = async () => {
     try {
@@ -181,6 +197,8 @@ export default function ConsumerScreen() {
           <Text style={styles.statusText}>Network: {networkStatus}</Text>
           <Text style={styles.statusText}>Balance: {walletBalance} ETH</Text>
           <Button title="Refresh" onPress={checkNetworkAndBalance} />
+          <View style={{ height: 8 }} />
+          <Button title="Scan QR" onPress={() => router.push('/(tabs)/camera')} />
         </View>
         
         <ScannerScreen 
@@ -328,8 +346,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 25,
-    paddingTop: 96, // Reduce overall gap below header
+    padding: 30,
+    paddingTop: 80, // Extra top padding to avoid camera/notch
   },
   title: {
     fontSize: 24,
@@ -341,7 +359,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 15,
     borderRadius: 10,
-    marginBottom: 8,
+    marginBottom: 20,
     alignItems: 'center',
   },
   statusText: {

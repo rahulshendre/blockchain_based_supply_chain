@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
   SafeAreaView
 } from "react-native";
+import { useRouter } from 'expo-router';
+import { useQR } from '../context/QRContext';
 import ScannerScreen from "./ScannerScreen";
 import { 
   distributorWallet,
@@ -22,6 +24,8 @@ import {
 } from "../utils/blockchain";
 
 export default function DistributorScreen() {
+  const router = useRouter();
+  const { scannedBatchId, clearScannedData, setScanningRole, markRoleCompleted, isRoleCompleted } = useQR();
   const [batchId, setBatchId] = useState("");
   const [quantity, setQuantity] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,7 +40,17 @@ export default function DistributorScreen() {
   // Check network connection and wallet balance on component mount
   useEffect(() => {
     checkNetworkAndBalance();
+    // Set scanning role for this screen
+    setScanningRole('Distributor');
   }, []);
+
+  // Handle scanned batch ID from QR context
+  useEffect(() => {
+    if (scannedBatchId) {
+      setBatchId(scannedBatchId);
+      clearScannedData();
+    }
+  }, [scannedBatchId, clearScannedData]);
 
   const checkNetworkAndBalance = async () => {
     try {
@@ -151,6 +165,8 @@ export default function DistributorScreen() {
         );
         // Store declared quantity off-chain as authoritative for this hop
         setLocalQuantity(id, 'Distributor', detailsForAlert.qty?.toString?.() ?? String(detailsForAlert.qty), updateRes.hash, Date.now());
+        // Mark Distributor role as completed for this batch
+        markRoleCompleted(id, 'Distributor');
         await checkNetworkAndBalance();
         setBatchId(id);
         setQuantity("");
@@ -177,6 +193,15 @@ export default function DistributorScreen() {
           <Text style={styles.statusText}>Network: {networkStatus}</Text>
           <Text style={styles.statusText}>Balance: {walletBalance} ETH</Text>
           <Button title="Refresh" onPress={checkNetworkAndBalance} />
+          <View style={{ height: 8 }} />
+          <Button 
+            title="Scan QR" 
+            onPress={() => router.push('/(tabs)/camera')}
+            disabled={Boolean(batchId && isRoleCompleted(batchId, 'Distributor'))}
+          />
+          {batchId && isRoleCompleted(batchId, 'Distributor') && (
+            <Text style={styles.disabledText}>QR scanning disabled - transaction completed</Text>
+          )}
         </View>
 
         {/* Inline feedback after updates */}
@@ -209,29 +234,41 @@ export default function DistributorScreen() {
           <View style={styles.updateSection}>
             <Text style={styles.batchInfo}>📦 Batch ID: {batchId}</Text>
             
-            <TextInput
-              style={styles.input}
-              placeholder="Quantity Received (e.g., 100)"
-              value={quantity}
-              onChangeText={setQuantity}
-              keyboardType="numeric"
-            />
-            
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#2196F3" />
-                <Text style={styles.loadingText}>Updating batch on blockchain...</Text>
+            {isRoleCompleted(batchId, 'Distributor') ? (
+              <View style={styles.completedSection}>
+                <Text style={styles.completedText}>✅ Distributor transaction completed</Text>
+                <Text style={styles.completedSubtext}>This batch has been processed by the Distributor and is ready for the Retailer.</Text>
+                {lastTransaction && (
+                  <Text style={styles.transactionText}>Transaction: {lastTransaction}</Text>
+                )}
               </View>
             ) : (
-              <Button 
-                title="Update Batch" 
-                onPress={handleUpdate}
-                disabled={networkStatus.includes("❌")}
-              />
-            )}
-            
-            {lastTransaction && (
-              <Text style={styles.transactionText}>Last Transaction: {lastTransaction}</Text>
+              <>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Quantity Received (e.g., 100)"
+                  value={quantity}
+                  onChangeText={setQuantity}
+                  keyboardType="numeric"
+                />
+                
+                {loading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#2196F3" />
+                    <Text style={styles.loadingText}>Updating batch on blockchain...</Text>
+                  </View>
+                ) : (
+                  <Button 
+                    title="Update Batch" 
+                    onPress={handleUpdate}
+                    disabled={networkStatus.includes("❌")}
+                  />
+                )}
+                
+                {lastTransaction && (
+                  <Text style={styles.transactionText}>Last Transaction: {lastTransaction}</Text>
+                )}
+              </>
             )}
           </View>
         ) : null}
@@ -250,8 +287,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 25,
-    paddingTop: 96, // Reduce overall gap below header
+    padding: 30,
+    paddingTop: 80, // Extra top padding to avoid camera/notch
   },
   title: {
     fontSize: 24,
@@ -321,5 +358,32 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 10,
     textAlign: 'center',
+  },
+  completedSection: {
+    backgroundColor: '#e8f5e8',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+  },
+  completedText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2e7d32',
+    marginBottom: 8,
+  },
+  completedSubtext: {
+    fontSize: 14,
+    color: '#388e3c',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  disabledText: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 5,
+    fontStyle: 'italic',
   },
 });
