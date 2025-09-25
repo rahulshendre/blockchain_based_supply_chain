@@ -1,3 +1,4 @@
+import 'react-native-get-random-values';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -10,6 +11,7 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
+  // react-native-get-random-values polyfills global.crypto.getRandomValues
   const colorScheme = useColorScheme();
 
   return (
