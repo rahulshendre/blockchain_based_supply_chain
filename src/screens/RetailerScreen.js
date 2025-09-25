@@ -277,8 +277,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 24,
-    paddingTop: 64, // Extra top padding to avoid camera/notch
+    padding: 25,
+    paddingTop: 210, // Extra top padding to avoid camera/notch
   },
   title: {
     fontSize: 24,
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 15,
     borderRadius: 10,
-    marginBottom: 20,
+    marginBottom: 8,
     alignItems: 'center',
   },
   statusText: {
