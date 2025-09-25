@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 25,
-    paddingTop: 210, // Extra top padding to avoid camera/notch
+    paddingTop: 96, // Reduce overall gap below header
   },
   title: {
     fontSize: 24,
