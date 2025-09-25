@@ -256,3 +256,19 @@ export const executeTransaction = async (contractFunction, errorMessage = "Trans
     };
   }
 };
+
+// Lightweight in-memory quantity store for MVP (can swap to AsyncStorage/Context later)
+// Structure:
+// localQuantities[batchId] = [
+//   { role: 'Farmer'|'Distributor'|'Retailer'|'Consumer', quantity: string, txHash?: string, timestamp?: number }
+// ]
+const localQuantities = {};
+
+export function setLocalQuantity(batchId, role, quantity, txHash, timestamp) {
+  if (!localQuantities[batchId]) localQuantities[batchId] = [];
+  localQuantities[batchId].push({ role, quantity, txHash, timestamp });
+}
+
+export function getLocalQuantities(batchId) {
+  return localQuantities[batchId] ? [...localQuantities[batchId]] : [];
+}

@@ -10,7 +10,7 @@ import {
   ActivityIndicator 
 } from "react-native";
 import ScannerScreen from "./ScannerScreen";
-import { retailerWallet, distributorWallet, farmerWallet, consumerWallet, getSupplyChainContract, executeTransaction, testNetworkConnection, getWalletBalance, provider } from "../utils/blockchain";
+import { retailerWallet, distributorWallet, farmerWallet, consumerWallet, getSupplyChainContract, executeTransaction, testNetworkConnection, getWalletBalance, provider, setLocalQuantity } from "../utils/blockchain";
 
 export default function RetailerScreen() {
   const [batchId, setBatchId] = useState("");
@@ -182,6 +182,8 @@ export default function RetailerScreen() {
           "Success",
           `Batch updated successfully!\n\nBatch ID: ${id}\nQuantity: ${quantity}\nStatus (on-chain): ${onChainStatus || 'Received by Retailer'}\n\nRetailer Update Tx: ${updateRes.hash}${consumerMsg}`
         );
+        // Store declared quantity off-chain for this hop
+        setLocalQuantity(id, 'Retailer', quantity.toString(), updateRes.hash, Date.now());
         setBatchId(id);
         setQuantity("");
         // Refresh displayed wallet balance

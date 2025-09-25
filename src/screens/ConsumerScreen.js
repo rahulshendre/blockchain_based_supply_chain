@@ -13,7 +13,8 @@ import {
   consumerWallet, 
   getSupplyChainContract,
   testNetworkConnection,
-  getWalletBalance
+  getWalletBalance,
+  getLocalQuantities
 } from "../utils/blockchain";
 
 export default function ConsumerScreen() {
@@ -258,22 +259,32 @@ export default function ConsumerScreen() {
                   let role = '—';
                   let action = '—';
                   let actor = '';
+                  // Try to overlay off-chain declared quantities for this step
+                  let declaredQty = '';
+                  const local = getLocalQuantities(productInfo.batchId);
+                  if (local.length) {
+                    // choose closest prior local record for this role
+                    const stepRole = isCreated ? 'Farmer' : isTransferred ? (ev.args?.role || ev.args?.[3] || '').toString() : (isCompleted ? 'Consumer' : 'Update');
+                    const candidates = local.filter(r => (r.role || '').toLowerCase().includes(stepRole.toLowerCase()));
+                    if (candidates.length) declaredQty = candidates[candidates.length - 1].quantity;
+                  }
                   if (isCreated) {
                     role = 'Farmer';
-                    action = `Created (${ev.args?.product || ev.args?.[1] || ''})`;
+                    action = `Created (${ev.args?.product || ev.args?.[1] || ''}${declaredQty ? `, qty: ${declaredQty}` : ''})`;
                     actor = ev.args?.farmer || ev.args?.[3] || '';
                   } else if (isTransferred) {
                     const r = (ev.args?.role || ev.args?.[3] || '').toString();
                     role = r;
-                    action = `Transferred to ${r}`;
+                    action = `Transferred to ${r}${declaredQty ? `, qty: ${declaredQty}` : ''}`;
                     actor = ev.args?.to || ev.args?.[2] || '';
                   } else if (isUpdated) {
                     role = 'Update';
-                    action = (ev.args?.status || ev.args?.[1] || '').toString();
+                    const st = (ev.args?.status || ev.args?.[1] || '').toString();
+                    action = declaredQty ? `${st} (qty: ${declaredQty})` : st;
                     actor = ev.args?.updatedBy || ev.args?.[2] || '';
                   } else if (isCompleted) {
                     role = 'Consumer';
-                    action = 'Completed';
+                    action = `Completed${declaredQty ? `, qty: ${declaredQty}` : ''}`;
                     actor = ev.args?.consumer || ev.args?.[1] || '';
                   }
                   const ts = ev.timestamp ? new Date(ev.timestamp * 1000).toISOString() : '';

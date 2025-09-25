@@ -16,7 +16,8 @@ import {
   getSupplyChainContract, 
   testNetworkConnection,
   getWalletBalance,
-  executeTransaction
+  executeTransaction,
+  setLocalQuantity
 } from "../utils/blockchain";
 
 export default function FarmerScreen() {
@@ -78,6 +79,8 @@ export default function FarmerScreen() {
 
       if (result.success) {
         setLastTransaction(result.hash);
+        // Record off-chain authoritative quantity for this batch at creation
+        setLocalQuantity(newBatchId, 'Farmer', quantity.toString(), result.hash, Date.now());
         Alert.alert(
           "Success", 
           `Batch created successfully!\n\nBatch ID: ${newBatchId}\nProduct: ${product}\nQuantity: ${quantity}\n\nTransaction: ${result.hash}`

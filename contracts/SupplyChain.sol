@@ -15,6 +15,11 @@ contract SupplyChain {
         uint256 updatedAt;
         string status;
         bool exists;
+        // Per-role balances to maintain accurate quantity flow
+        uint256 farmerQty;
+        uint256 distributorQty;
+        uint256 retailerQty;
+        uint256 consumerQty;
     }
 
     // Mapping from batch ID to batch information
@@ -26,7 +31,8 @@ contract SupplyChain {
     // Events
     event BatchCreated(string indexed batchId, string product, uint256 quantity, address farmer);
     event BatchUpdated(string indexed batchId, string status, address updatedBy);
-    event BatchTransferred(string indexed batchId, address from, address to, string role);
+    // Include quantity moved so off-chain consumers can reconcile balances
+    event BatchTransferred(string indexed batchId, address from, address to, string role, uint256 quantity);
 
     // Modifier to check if batch exists
     modifier batchExists(string memory _batchId) {
@@ -54,7 +60,11 @@ contract SupplyChain {
             createdAt: block.timestamp,
             updatedAt: block.timestamp,
             status: "Created by Farmer",
-            exists: true
+            exists: true,
+            farmerQty: _quantity,
+            distributorQty: 0,
+            retailerQty: 0,
+            consumerQty: 0
         });
         
         batchIds.push(_batchId);
@@ -87,49 +97,64 @@ contract SupplyChain {
     // Function to transfer batch to distributor
     function transferToDistributor(
         string memory _batchId,
-        address _distributor
+        address _distributor,
+        uint256 _quantityMoved
     ) external batchExists(_batchId) {
         Batch storage batch = batches[_batchId];
         require(msg.sender == batch.farmer, "Only farmer can transfer to distributor");
         require(_distributor != address(0), "Invalid distributor address");
+        require(_quantityMoved > 0, "Quantity must be > 0");
+        require(batch.farmerQty >= _quantityMoved, "Insufficient farmer quantity");
         
         batch.distributor = _distributor;
+        batch.farmerQty -= _quantityMoved;
+        batch.distributorQty += _quantityMoved;
         batch.status = "Transferred to Distributor";
         batch.updatedAt = block.timestamp;
         
-        emit BatchTransferred(_batchId, batch.farmer, _distributor, "Distributor");
+        emit BatchTransferred(_batchId, batch.farmer, _distributor, "Distributor", _quantityMoved);
     }
 
     // Function to transfer batch to retailer
     function transferToRetailer(
         string memory _batchId,
-        address _retailer
+        address _retailer,
+        uint256 _quantityMoved
     ) external batchExists(_batchId) {
         Batch storage batch = batches[_batchId];
         require(msg.sender == batch.distributor, "Only distributor can transfer to retailer");
         require(_retailer != address(0), "Invalid retailer address");
+        require(_quantityMoved > 0, "Quantity must be > 0");
+        require(batch.distributorQty >= _quantityMoved, "Insufficient distributor quantity");
         
         batch.retailer = _retailer;
+        batch.distributorQty -= _quantityMoved;
+        batch.retailerQty += _quantityMoved;
         batch.status = "Transferred to Retailer";
         batch.updatedAt = block.timestamp;
         
-        emit BatchTransferred(_batchId, batch.distributor, _retailer, "Retailer");
+        emit BatchTransferred(_batchId, batch.distributor, _retailer, "Retailer", _quantityMoved);
     }
 
     // Function to transfer batch to consumer
     function transferToConsumer(
         string memory _batchId,
-        address _consumer
+        address _consumer,
+        uint256 _quantityMoved
     ) external batchExists(_batchId) {
         Batch storage batch = batches[_batchId];
         require(msg.sender == batch.retailer, "Only retailer can transfer to consumer");
         require(_consumer != address(0), "Invalid consumer address");
+        require(_quantityMoved > 0, "Quantity must be > 0");
+        require(batch.retailerQty >= _quantityMoved, "Insufficient retailer quantity");
         
         batch.consumer = _consumer;
+        batch.retailerQty -= _quantityMoved;
+        batch.consumerQty += _quantityMoved;
         batch.status = "Sold to Consumer";
         batch.updatedAt = block.timestamp;
         
-        emit BatchTransferred(_batchId, batch.retailer, _consumer, "Consumer");
+        emit BatchTransferred(_batchId, batch.retailer, _consumer, "Consumer", _quantityMoved);
     }
 
     // Function to get batch information
@@ -160,6 +185,12 @@ contract SupplyChain {
             batch.updatedAt,
             batch.status
         );
+    }
+
+    // Expose per-role balances so the UI can reconcile flows
+    function getBatchBalances(string memory _batchId) external view batchExists(_batchId) returns (uint256, uint256, uint256, uint256) {
+        Batch memory batch = batches[_batchId];
+        return (batch.farmerQty, batch.distributorQty, batch.retailerQty, batch.consumerQty);
     }
 
     // Function to get all batch IDs

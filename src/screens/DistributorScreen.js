@@ -16,7 +16,8 @@ import {
   getSupplyChainContract,
   testNetworkConnection,
   getWalletBalance,
-  executeTransaction
+  executeTransaction,
+  setLocalQuantity
 } from "../utils/blockchain";
 
 export default function DistributorScreen() {
@@ -147,6 +148,8 @@ export default function DistributorScreen() {
           "Success",
           `Batch updated successfully!\n\nBatch ID: ${id}\nQuantity: ${detailsForAlert.qty}\nStatus (on-chain): ${statusAfterStr}\n\nTransaction: ${updateRes.hash}`
         );
+        // Store declared quantity off-chain as authoritative for this hop
+        setLocalQuantity(id, 'Distributor', detailsForAlert.qty?.toString?.() ?? String(detailsForAlert.qty), updateRes.hash, Date.now());
         await checkNetworkAndBalance();
         setBatchId(id);
         setQuantity("");
